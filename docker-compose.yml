@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  api:
+    container_name: car_inventory_web
+    build: .
+    environment:
+      FLASK_ENV: development
+    expose:
+      - 7080
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    command: [sh, -c, "flask run -h 0.0.0.0 -p 7080"]
+    volumes:
+      - ./:/app
+  mysql:
+    image: mysql:5.7
+    container_name: car_inventory_mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: 'car_inventory'
+      MYSQL_USER: 'car_user'
+      MYSQL_PASSWORD: 'PW2Tlky0987'
+      MYSQL_ROOT_PASSWORD: 'PW2Tlky0987'
+    volumes:
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
+  nginx:
+    build:
+      dockerfile: ./Dockerfile.nginx
+      context: .
+    restart: always
+    container_name: nginx
+    command: [sh, -c, "/docker-wait && nginx -g 'daemon off;'"]
+    ports:
+      - 80:80
+    environment:
+      - WAIT_HOSTS=api:7080
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=10
